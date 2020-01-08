@@ -323,7 +323,7 @@ namespace QtAndroidInput
     }
 
     static void tabletEvent(JNIEnv */*env*/, jobject /*thiz*/, jint /*winId*/, jint deviceId, jlong time, jint action,
-        jint pointerType, jint buttonState, jfloat x, jfloat y, jfloat pressure)
+        jint pointerType, jint buttonState, jfloat x, jfloat y, jfloat pressure, jfloat tiltX, jfloat tiltY, jfloat rotation)
     {
 #if QT_CONFIG(tabletevent)
         QPointF globalPosF(x, y);
@@ -371,7 +371,7 @@ namespace QtAndroidInput
 
         QWindowSystemInterface::handleTabletEvent(tlw, ulong(time),
             localPos, globalPosF, QTabletEvent::Stylus, pointerType,
-            buttons, pressure, 0, 0, 0., 0., 0, deviceId, Qt::NoModifier);
+            buttons, pressure, tiltX, tiltY, 0., rotation, 0, deviceId, Qt::NoModifier);
 #endif // QT_CONFIG(tabletevent)
     }
 
@@ -876,7 +876,7 @@ namespace QtAndroidInput
         {"mouseWheel", "(IIIFF)V", (void *)mouseWheel},
         {"longPress", "(III)V", (void *)longPress},
         {"isTabletEventSupported", "()Z", (void *)isTabletEventSupported},
-        {"tabletEvent", "(IIJIIIFFF)V", (void *)tabletEvent},
+        {"tabletEvent", "(IIJIIIFFFFFF)V", (void *)tabletEvent},
         {"keyDown", "(IIIZ)V", (void *)keyDown},
         {"keyUp", "(IIIZ)V", (void *)keyUp},
         {"keyboardVisibilityChanged", "(Z)V", (void *)keyboardVisibilityChanged},

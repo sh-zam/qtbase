@@ -489,8 +489,13 @@ public class QtNative
         if (event.getToolType(0) == MotionEvent.TOOL_TYPE_MOUSE) {
             sendMouseEvent(event, id);
         } else if (m_tabletEventSupported && pointerType != 0) {
+            float tiltRot = event.getAxisValue(MotionEvent.AXIS_TILT);
+            float orientation = event.getAxisValue(MotionEvent.AXIS_ORIENTATION);
+            float tiltX = (float) Math.toDegrees(-Math.sin(orientation) * tiltRot);
+            float tiltY = (float) Math.toDegrees(Math.cos(orientation) * tiltRot);
             tabletEvent(id, event.getDeviceId(), event.getEventTime(), event.getAction(), pointerType,
-                event.getButtonState(), event.getX(), event.getY(), event.getPressure());
+                event.getButtonState(), event.getX(), event.getY(), event.getPressure(), tiltX, tiltY,
+                (float) Math.toDegrees(orientation));
         } else {
             touchBegin(id);
             for (int i = 0; i < event.getPointerCount(); ++i) {
@@ -1050,7 +1055,7 @@ public class QtNative
 
     // tablet methods
     public static native boolean isTabletEventSupported();
-    public static native void tabletEvent(int winId, int deviceId, long time, int action, int pointerType, int buttonState, float x, float y, float pressure);
+    public static native void tabletEvent(int winId, int deviceId, long time, int action, int pointerType, int buttonState, float x, float y, float pressure, float tiltX, float tiltY, float rotation);
     // tablet methods
 
     // keyboard methods
