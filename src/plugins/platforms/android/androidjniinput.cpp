@@ -43,6 +43,7 @@
 #include "androidjniinput.h"
 #include "androidjnimain.h"
 #include "qandroidplatformintegration.h"
+#include "qandroidplatformwindow.h"
 
 #include <qpa/qwindowsysteminterface.h>
 #include <QTouchEvent>
@@ -137,9 +138,13 @@ namespace QtAndroidInput
             return;
 
         QPoint globalPos(x,y);
+        QPoint localPos = globalPos;
         QWindow *tlw = topLevelWindowAt(globalPos);
+        if (tlw) {
+            QPlatformWindow *platformWindow = tlw->handle();
+            localPos = platformWindow ? platformWindow->mapFromGlobal(globalPos) : globalPos;
+        }
         m_mouseGrabber = tlw;
-        QPoint localPos = tlw ? (globalPos - tlw->position()) : globalPos;
         QWindowSystemInterface::handleMouseEvent(tlw,
                                                  localPos,
                                                  globalPos,
@@ -152,7 +157,12 @@ namespace QtAndroidInput
         QWindow *tlw = m_mouseGrabber.data();
         if (!tlw)
             tlw = topLevelWindowAt(globalPos);
-        QPoint localPos = tlw ? (globalPos -tlw->position()) : globalPos;
+
+        QPoint localPos = globalPos;
+        if (tlw) {
+            QPlatformWindow *platformWindow = tlw->handle();
+            localPos = platformWindow ? platformWindow->mapFromGlobal(globalPos) : globalPos;
+        }
         QWindowSystemInterface::handleMouseEvent(tlw, localPos, globalPos
                                                 , Qt::MouseButtons(Qt::NoButton));
         m_ignoreMouseEvents = false;
@@ -161,7 +171,6 @@ namespace QtAndroidInput
 
     static void mouseMove(JNIEnv */*env*/, jobject /*thiz*/, jint /*winId*/, jint x, jint y)
     {
-
         if (m_ignoreMouseEvents)
             return;
 
@@ -169,7 +178,12 @@ namespace QtAndroidInput
         QWindow *tlw = m_mouseGrabber.data();
         if (!tlw)
             tlw = topLevelWindowAt(globalPos);
-        QPoint localPos = tlw ? (globalPos-tlw->position()) : globalPos;
+
+        QPoint localPos = globalPos;
+        if (tlw) {
+            QPlatformWindow *platformWindow = tlw->handle();
+            localPos = platformWindow ? platformWindow->mapFromGlobal(globalPos) : globalPos;
+        }
         QWindowSystemInterface::handleMouseEvent(tlw,
                                                  localPos,
                                                  globalPos,
@@ -185,7 +199,12 @@ namespace QtAndroidInput
         QWindow *tlw = m_mouseGrabber.data();
         if (!tlw)
             tlw = topLevelWindowAt(globalPos);
-        QPoint localPos = tlw ? (globalPos-tlw->position()) : globalPos;
+
+        QPoint localPos = globalPos;
+        if (tlw) {
+            QPlatformWindow *platformWindow = tlw->handle();
+            localPos = platformWindow ? platformWindow->mapFromGlobal(globalPos) : globalPos;
+        }
         QPoint angleDelta(hdelta * 120, vdelta * 120);
 
         QWindowSystemInterface::handleWheelEvent(tlw,
@@ -310,7 +329,12 @@ namespace QtAndroidInput
         QPointF globalPosF(x, y);
         QPoint globalPos((int)x, (int)y);
         QWindow *tlw = topLevelWindowAt(globalPos);
-        QPointF localPos = tlw ? (globalPosF - tlw->position()) : globalPosF;
+
+        QPointF localPos = globalPosF;
+        if (tlw) {
+            QPlatformWindow *platformWindow = tlw->handle();
+            localPos = platformWindow ? platformWindow->mapFromGlobal(globalPos) : globalPosF;
+        }
 
         // Galaxy Note with plain Android:
         // 0 1 0    stylus press
