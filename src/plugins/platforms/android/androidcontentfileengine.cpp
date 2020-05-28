@@ -90,7 +90,7 @@ qint64 AndroidContentFileEngine::size() const
 
 AndroidContentFileEngine::FileFlags AndroidContentFileEngine::fileFlags(FileFlags type) const
 {
-    FileFlags commonFlags(ReadOwnerPerm|ReadUserPerm|ReadGroupPerm|ReadOtherPerm|ExistsFlag);
+    FileFlags commonFlags(ReadOwnerPerm|ReadUserPerm|ReadGroupPerm|ReadOtherPerm|ExistsFlag|WriteOwnerPerm|WriteUserPerm|WriteGroupPerm|WriteOtherPerm);
     FileFlags flags;
     const bool exists = QJNIObjectPrivate::callStaticMethod<jboolean>(
             "org/qtproject/qt5/android/QtNative", "checkFileExists",
