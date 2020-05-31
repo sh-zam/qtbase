@@ -757,6 +757,12 @@ QString QFileInfo::fileName() const
     Q_D(const QFileInfo);
     if (d->isDefaultConstructed)
         return QLatin1String("");
+#ifdef Q_OS_ANDROID
+    if (d->fileEntry.filePath().startsWith("content:") && d->fileEngine) {
+        QString fname = d->fileEngine->fileName();
+        return fname;
+    }
+#endif
     return d->fileEntry.fileName();
 }
 
@@ -862,6 +868,11 @@ QString QFileInfo::suffix() const
     Q_D(const QFileInfo);
     if (d->isDefaultConstructed)
         return QLatin1String("");
+
+#ifdef Q_OS_ANDROID
+    QString fname = fileName();
+    return fname.split(".").last();
+#endif
     return d->fileEntry.suffix();
 }
 
