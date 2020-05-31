@@ -290,6 +290,30 @@ public class QtNative
         }
     }
 
+    public static String getFileNameFromUri(Context context, String contentUrl)
+    {
+        Uri uri = getUriWithValidPermission(context, contentUrl, "r");
+        if (uri == null) {
+            Log.e(QtTAG, "getFileNameFromUri(): No permissions to open Uri");
+            return null;
+        }
+
+        String filename = null;
+        try {
+            Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    filename = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
+                }
+                cursor.close();
+            }
+        } catch (IllegalArgumentException e) {
+            Log.e(QtTAG, "getFileNameFromUri(): Couldn't get filename");
+        }
+
+        return filename;
+    }
+
     // this method loads full path libs
     public static void loadQtLibraries(final ArrayList<String> libraries)
     {

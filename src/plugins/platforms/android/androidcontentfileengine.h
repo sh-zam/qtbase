@@ -50,9 +50,12 @@ public:
     qint64 size() const override;
     FileFlags fileFlags(FileFlags type = FileInfoAll) const override;
     QString fileName(FileName file = DefaultName) const override;
+
+    /// Resolves the URI to the actual filename
+    void setResolvedFileName(const QString& uri);
 private:
     QString m_file;
-
+    QString m_resolvedName;
 };
 
 class AndroidContentFileEngineHandler : public QAbstractFileEngineHandler

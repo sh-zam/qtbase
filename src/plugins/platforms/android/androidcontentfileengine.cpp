@@ -45,9 +45,10 @@
 #include <QDebug>
 
 AndroidContentFileEngine::AndroidContentFileEngine(const QString &f)
-    : m_file(f)
+    : m_file(f), m_resolvedName(QString())
 {
     setFileName(f);
+    setResolvedFileName(f);
 }
 
 bool AndroidContentFileEngine::open(QIODevice::OpenMode openMode)
@@ -69,7 +70,7 @@ bool AndroidContentFileEngine::open(QIODevice::OpenMode openMode)
         "openFdForContentUrl",
         "(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)I",
         QtAndroidPrivate::context(),
-        QJNIObjectPrivate::fromString(fileName(DefaultName)).object(),
+        QJNIObjectPrivate::fromString(m_file).object(),
         QJNIObjectPrivate::fromString(openModeStr).object());
 
     if (fd < 0) {
@@ -84,7 +85,7 @@ qint64 AndroidContentFileEngine::size() const
     const jlong size = QJNIObjectPrivate::callStaticMethod<jlong>(
             "org/qtproject/qt5/android/QtNative", "getSize",
             "(Landroid/content/Context;Ljava/lang/String;)J", QtAndroidPrivate::context(),
-            QJNIObjectPrivate::fromString(fileName(DefaultName)).object());
+            QJNIObjectPrivate::fromString(m_file).object());
     return (qint64)size;
 }
 
@@ -95,7 +96,7 @@ AndroidContentFileEngine::FileFlags AndroidContentFileEngine::fileFlags(FileFlag
     const bool exists = QJNIObjectPrivate::callStaticMethod<jboolean>(
             "org/qtproject/qt5/android/QtNative", "checkFileExists",
             "(Landroid/content/Context;Ljava/lang/String;)Z", QtAndroidPrivate::context(),
-            QJNIObjectPrivate::fromString(fileName(DefaultName)).object());
+            QJNIObjectPrivate::fromString(m_file).object());
     if (!exists)
         return flags;
     flags = FileType | commonFlags;
@@ -105,22 +106,41 @@ AndroidContentFileEngine::FileFlags AndroidContentFileEngine::fileFlags(FileFlag
 QString AndroidContentFileEngine::fileName(FileName f) const
 {
     switch (f) {
+        case DefaultName: {
+            return m_resolvedName;
+        }
         case PathName:
-        case AbsolutePathName:
-        case CanonicalPathName:
-        case DefaultName:
         case AbsoluteName:
+        case AbsolutePathName:
         case CanonicalName:
+        case CanonicalPathName:
             return m_file;
-        case BaseName:
-        {
-            const int pos = m_file.lastIndexOf(QChar(QLatin1Char('/')));
-            return m_file.mid(pos);
+
+        case BaseName: {
+            const int pos = m_resolvedName.lastIndexOf(QChar(QLatin1Char('/')));
+            return m_resolvedName.mid(pos);
         }
         default:
             return QString();
     }
 }
+
+void AndroidContentFileEngine::setResolvedFileName(const QString& uri)
+{
+    QJNIObjectPrivate resolvedName = QJNIObjectPrivate::callStaticObjectMethod(
+        "org/qtproject/qt5/android/QtNative",
+        "getFileNameFromUri",
+        "(Landroid/content/Context;Ljava/lang/String;)Ljava/lang/String;",
+        QtAndroidPrivate::context(),
+        QJNIObjectPrivate::fromString(uri).object());
+
+    if (resolvedName.isValid()) {
+        m_resolvedName = resolvedName.toString();
+    } else {
+        qWarning("setResolvedFileName: Couldn't resolve the URI");
+    }
+}
+
 
 AndroidContentFileEngineHandler::AndroidContentFileEngineHandler() = default;
 AndroidContentFileEngineHandler::~AndroidContentFileEngineHandler() = default;
