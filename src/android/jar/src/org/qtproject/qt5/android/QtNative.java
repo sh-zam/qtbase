@@ -72,6 +72,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.InputDevice;
 import android.database.Cursor;
+import android.provider.OpenableColumns;
 
 import java.lang.reflect.Method;
 import java.security.KeyStore;
@@ -246,9 +247,10 @@ public class QtNative
         try {
             ContentResolver resolver = context.getContentResolver();
             Cursor cur = resolver.query(uri, null, null, null, null);
+
             if (cur != null) {
                 if (cur.moveToFirst())
-                    size = cur.getLong(5); // size column
+                    size = cur.getLong(cur.getColumnIndex(OpenableColumns.SIZE)); // size column
                 cur.close();
             }
             return size;
