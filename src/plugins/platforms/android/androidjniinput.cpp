@@ -63,6 +63,7 @@ namespace QtAndroidInput
     static bool m_ignoreMouseEvents = false;
     static bool m_softwareKeyboardVisible = false;
     static QRect m_softwareKeyboardRect;
+    static int m_previousButtons = Qt::NoButton;
 
     static QList<QWindowSystemInterface::TouchPoint> m_touchPoints;
 
@@ -357,17 +358,22 @@ namespace QtAndroidInput
         // when action == ACTION_UP (1) it's a release; otherwise we say which button is pressed
         Qt::MouseButtons buttons = Qt::NoButton;
         switch (action) {
-        case 1:     // ACTION_UP
-        case 212:   // stylus release while side-button held on Galaxy Note 4
+        case ACTION_UP:
             buttons = Qt::NoButton;
             break;
-        default:    // action is press or drag
-            if (buttonState == 0)
+        default:    // for now only ACTION_DOWN
+            if (buttonState == NO_BUTTON)
                 buttons = Qt::LeftButton;
-            else // 2 means RightButton
-                buttons = Qt::MouseButtons(buttonState);
+            else if (buttonState == BUTTON_STYLUS_PRIMARY)
+                buttons = Qt::MiddleButton;
+            else if (buttonState == BUTTON_STYLUS_SECONDARY)
+                buttons = Qt::RightButton;
             break;
         }
+        if (m_previousButtons != buttons && m_previousButtons != Qt::NoButton) {
+            buttons = Qt::NoButton;
+        }
+        m_previousButtons = buttons;
 
 #ifdef QT_DEBUG_ANDROID_STYLUS
         qDebug() << action << pointerType << buttonState << '@' << x << y << "pressure" << pressure << ": buttons" << buttons;
