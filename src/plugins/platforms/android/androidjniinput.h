@@ -48,6 +48,16 @@ QT_BEGIN_NAMESPACE
 
 namespace QtAndroidInput
 {
+    enum Actions {
+        ACTION_DOWN = 0,
+        ACTION_UP = 1,
+    };
+    enum ButtonStates {
+        NO_BUTTON = 0,
+        BUTTON_STYLUS_PRIMARY = 32,     // 0x00000020
+        BUTTON_STYLUS_SECONDARY = 64,   // 0x00000040
+    };
+
     // Software keyboard support
     void showSoftwareKeyboard(int top, int left, int width, int height, int inputHints, int enterKeyType);
     void resetSoftwareKeyboard();
