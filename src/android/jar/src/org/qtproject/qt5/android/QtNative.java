@@ -495,7 +495,7 @@ public class QtNative
             float tiltY = (float) Math.toDegrees(Math.cos(orientation) * tiltRot);
             tabletEvent(id, event.getDeviceId(), event.getEventTime(), event.getAction(), pointerType,
                 event.getButtonState(), event.getX(), event.getY(), event.getPressure(), tiltX, tiltY,
-                (float) Math.toDegrees(orientation));
+                (float) Math.toDegrees(orientation), event.getMetaState());
         } else {
             touchBegin(id);
             for (int i = 0; i < event.getPointerCount(); ++i) {
@@ -545,23 +545,23 @@ public class QtNative
     {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_UP:
-                mouseUp(id, (int) event.getX(), (int) event.getY());
+                mouseUp(id, (int) event.getX(), (int) event.getY(), event.getMetaState());
                 break;
 
             case MotionEvent.ACTION_DOWN:
-                mouseDown(id, (int) event.getX(), (int) event.getY());
+                mouseDown(id, (int) event.getX(), (int) event.getY(), event.getMetaState());
                 m_oldx = (int) event.getX();
                 m_oldy = (int) event.getY();
                 break;
             case MotionEvent.ACTION_HOVER_MOVE:
             case MotionEvent.ACTION_MOVE:
                 if (event.getToolType(0) == MotionEvent.TOOL_TYPE_MOUSE) {
-                    mouseMove(id, (int) event.getX(), (int) event.getY());
+                    mouseMove(id, (int) event.getX(), (int) event.getY(), event.getMetaState());
                 } else {
                     int dx = (int) (event.getX() - m_oldx);
                     int dy = (int) (event.getY() - m_oldy);
                     if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-                        mouseMove(id, (int) event.getX(), (int) event.getY());
+                        mouseMove(id, (int) event.getX(), (int) event.getY(), event.getMetaState());
                         m_oldx = (int) event.getX();
                         m_oldy = (int) event.getY();
                     }
@@ -1043,9 +1043,9 @@ public class QtNative
     // screen methods
 
     // pointer methods
-    public static native void mouseDown(int winId, int x, int y);
-    public static native void mouseUp(int winId, int x, int y);
-    public static native void mouseMove(int winId, int x, int y);
+    public static native void mouseDown(int winId, int x, int y, int modifier);
+    public static native void mouseUp(int winId, int x, int y, int modifiers);
+    public static native void mouseMove(int winId, int x, int y, int modifier);
     public static native void mouseWheel(int winId, int x, int y, float hdelta, float vdelta);
     public static native void touchBegin(int winId);
     public static native void touchAdd(int winId, int pointerId, int action, boolean primary, int x, int y, float major, float minor, float rotation, float pressure);
@@ -1055,7 +1055,7 @@ public class QtNative
 
     // tablet methods
     public static native boolean isTabletEventSupported();
-    public static native void tabletEvent(int winId, int deviceId, long time, int action, int pointerType, int buttonState, float x, float y, float pressure, float tiltX, float tiltY, float rotation);
+    public static native void tabletEvent(int winId, int deviceId, long time, int action, int pointerType, int buttonState, float x, float y, float pressure, float tiltX, float tiltY, float rotation, int modifiers);
     // tablet methods
 
     // keyboard methods
