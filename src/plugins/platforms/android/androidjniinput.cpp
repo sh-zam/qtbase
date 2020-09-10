@@ -59,6 +59,7 @@ using namespace QtAndroid;
 
 namespace QtAndroidInput
 {
+    static Qt::KeyboardModifiers mapAndroidModifiers(jint modifiers);
     static bool m_ignoreMouseEvents = false;
     static bool m_softwareKeyboardVisible = false;
     static QRect m_softwareKeyboardRect;
@@ -132,7 +133,7 @@ namespace QtAndroidInput
                                                   anchor.x(), anchor.y(), rtl);
     }
 
-    static void mouseDown(JNIEnv */*env*/, jobject /*thiz*/, jint /*winId*/, jint x, jint y)
+    static void mouseDown(JNIEnv */*env*/, jobject /*thiz*/, jint /*winId*/, jint x, jint y, jint modifier)
     {
         if (m_ignoreMouseEvents)
             return;
@@ -148,10 +149,11 @@ namespace QtAndroidInput
         QWindowSystemInterface::handleMouseEvent(tlw,
                                                  localPos,
                                                  globalPos,
-                                                 Qt::MouseButtons(Qt::LeftButton));
+                                                 Qt::MouseButtons(Qt::LeftButton),
+                                                 mapAndroidModifiers(modifier));
     }
 
-    static void mouseUp(JNIEnv */*env*/, jobject /*thiz*/, jint /*winId*/, jint x, jint y)
+    static void mouseUp(JNIEnv */*env*/, jobject /*thiz*/, jint /*winId*/, jint x, jint y, jint modifiers)
     {
         QPoint globalPos(x,y);
         QWindow *tlw = m_mouseGrabber.data();
@@ -164,12 +166,12 @@ namespace QtAndroidInput
             localPos = platformWindow ? platformWindow->mapFromGlobal(globalPos) : globalPos;
         }
         QWindowSystemInterface::handleMouseEvent(tlw, localPos, globalPos
-                                                , Qt::MouseButtons(Qt::NoButton));
+                                                , Qt::MouseButtons(Qt::NoButton), mapAndroidModifiers(modifiers));
         m_ignoreMouseEvents = false;
         m_mouseGrabber = 0;
     }
 
-    static void mouseMove(JNIEnv */*env*/, jobject /*thiz*/, jint /*winId*/, jint x, jint y)
+    static void mouseMove(JNIEnv */*env*/, jobject /*thiz*/, jint /*winId*/, jint x, jint y, jint modifier)
     {
         if (m_ignoreMouseEvents)
             return;
@@ -187,7 +189,8 @@ namespace QtAndroidInput
         QWindowSystemInterface::handleMouseEvent(tlw,
                                                  localPos,
                                                  globalPos,
-                                                 Qt::MouseButtons(m_mouseGrabber ? Qt::LeftButton : Qt::NoButton));
+                                                 Qt::MouseButtons(m_mouseGrabber ? Qt::LeftButton : Qt::NoButton),
+                                                 mapAndroidModifiers(modifier));
     }
 
     static void mouseWheel(JNIEnv */*env*/, jobject /*thiz*/, jint /*winId*/, jint x, jint y, jfloat hdelta, jfloat vdelta)
@@ -323,7 +326,8 @@ namespace QtAndroidInput
     }
 
     static void tabletEvent(JNIEnv */*env*/, jobject /*thiz*/, jint /*winId*/, jint deviceId, jlong time, jint action,
-        jint pointerType, jint buttonState, jfloat x, jfloat y, jfloat pressure, jfloat tiltX, jfloat tiltY, jfloat rotation)
+        jint pointerType, jint buttonState, jfloat x, jfloat y, jfloat pressure, jfloat tiltX, jfloat tiltY, jfloat rotation,
+        jint modifiers)
     {
 #if QT_CONFIG(tabletevent)
         QPointF globalPosF(x, y);
@@ -371,7 +375,7 @@ namespace QtAndroidInput
 
         QWindowSystemInterface::handleTabletEvent(tlw, ulong(time),
             localPos, globalPosF, QTabletEvent::Stylus, pointerType,
-            buttons, pressure, tiltX, tiltY, 0., rotation, 0, deviceId, Qt::NoModifier);
+            buttons, pressure, tiltX, tiltY, 0., rotation, 0, deviceId, mapAndroidModifiers(modifiers));
 #endif // QT_CONFIG(tabletevent)
     }
 
@@ -870,13 +874,13 @@ namespace QtAndroidInput
         {"touchBegin","(I)V",(void*)touchBegin},
         {"touchAdd","(IIIZIIFFFF)V",(void*)touchAdd},
         {"touchEnd","(II)V",(void*)touchEnd},
-        {"mouseDown", "(III)V", (void *)mouseDown},
-        {"mouseUp", "(III)V", (void *)mouseUp},
-        {"mouseMove", "(III)V", (void *)mouseMove},
+        {"mouseDown", "(IIII)V", (void *)mouseDown},
+        {"mouseUp", "(IIII)V", (void *)mouseUp},
+        {"mouseMove", "(IIII)V", (void *)mouseMove},
         {"mouseWheel", "(IIIFF)V", (void *)mouseWheel},
         {"longPress", "(III)V", (void *)longPress},
         {"isTabletEventSupported", "()Z", (void *)isTabletEventSupported},
-        {"tabletEvent", "(IIJIIIFFFFFF)V", (void *)tabletEvent},
+        {"tabletEvent", "(IIJIIIFFFFFFI)V", (void *)tabletEvent},
         {"keyDown", "(IIIZ)V", (void *)keyDown},
         {"keyUp", "(IIIZ)V", (void *)keyUp},
         {"keyboardVisibilityChanged", "(Z)V", (void *)keyboardVisibilityChanged},
