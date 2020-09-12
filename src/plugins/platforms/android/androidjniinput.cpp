@@ -225,7 +225,7 @@ namespace QtAndroidInput
             QMetaObject::invokeMethod(inputContext, "longPress", Q_ARG(int, x), Q_ARG(int, y));
 
         //### TODO: add proper API for Qt 5.2
-        static bool rightMouseFromLongPress = qEnvironmentVariableIntValue("QT_NECESSITAS_COMPATIBILITY_LONG_PRESS");
+        static bool rightMouseFromLongPress = true;
         if (!rightMouseFromLongPress)
             return;
         m_ignoreMouseEvents = true;
@@ -244,6 +244,12 @@ namespace QtAndroidInput
                                                  localPos,
                                                  globalPos,
                                                  Qt::MouseButtons(Qt::RightButton));
+
+        // Release right button
+        QWindowSystemInterface::handleMouseEvent(tlw,
+                                                 localPos,
+                                                 globalPos,
+                                                 Qt::MouseButtons(Qt::NoButton));
     }
 
     static void touchBegin(JNIEnv */*env*/, jobject /*thiz*/, jint /*winId*/)
