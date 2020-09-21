@@ -45,7 +45,7 @@
 #include <QDebug>
 
 AndroidContentFileEngine::AndroidContentFileEngine(const QString &f)
-    : m_file(f), m_resolvedName(QString())
+    : m_fd(-1), m_file(f), m_resolvedName(QString())
 {
     setFileName(f);
     setResolvedFileName(f);
@@ -77,7 +77,15 @@ bool AndroidContentFileEngine::open(QIODevice::OpenMode openMode)
         return false;
     }
 
-    return QFSFileEngine::open(openMode, fd, QFile::AutoCloseHandle);
+    setFileDescriptor(fd);
+    return QFSFileEngine::open(openMode, m_fd, QFile::AutoCloseHandle);
+}
+
+bool AndroidContentFileEngine::close()
+{
+    return QJNIObjectPrivate::callStaticMethod<jboolean>(
+        "org/qtproject/qt5/android/QtNative", "closeFd",
+        "(I)Z", m_fd);
 }
 
 qint64 AndroidContentFileEngine::size() const
@@ -139,6 +147,11 @@ void AndroidContentFileEngine::setResolvedFileName(const QString& uri)
     } else {
         qWarning("setResolvedFileName: Couldn't resolve the URI");
     }
+}
+
+void AndroidContentFileEngine::setFileDescriptor(const int fd)
+{
+    m_fd = fd;
 }
 
 
