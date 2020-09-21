@@ -47,13 +47,19 @@ class AndroidContentFileEngine : public QFSFileEngine
 public:
     AndroidContentFileEngine(const QString &fileName);
     bool open(QIODevice::OpenMode openMode) override;
+    bool close() override;
     qint64 size() const override;
     FileFlags fileFlags(FileFlags type = FileInfoAll) const override;
     QString fileName(FileName file = DefaultName) const override;
 
     /// Resolves the URI to the actual filename
     void setResolvedFileName(const QString& uri);
+
 private:
+    void setFileDescriptor(const int fd);
+
+private:
+    int m_fd;
     QString m_file;
     QString m_resolvedName;
 };

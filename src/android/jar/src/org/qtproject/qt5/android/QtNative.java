@@ -43,6 +43,7 @@ package org.qtproject.qt5.android;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.Semaphore;
 import java.io.IOException;
 
@@ -111,6 +112,9 @@ public class QtNative
     private static boolean m_usePrimaryClip = false;
     public static QtThread m_qtThread = new QtThread();
     private static Method m_addItemMethod = null;
+
+    private static HashMap<Integer, ParcelFileDescriptor> m_parcelFileDescriptors = new HashMap<Integer, ParcelFileDescriptor>();
+
     private static final Runnable runPendingCppRunnablesRunnable = new Runnable() {
         @Override
         public void run() {
@@ -176,8 +180,9 @@ public class QtNative
                 if (!openMode.equals("r"))
                    isRightPermission = permissions.get(i).isWritePermission();
 
-                if (iterUri.getPath().equals(uriStr) && isRightPermission)
+                if (iterUri.getPath().equals(uriStr) && isRightPermission) {
                     return iterUri;
+                }
             }
 
             return null;
@@ -230,12 +235,30 @@ public class QtNative
         try {
             ContentResolver resolver = context.getContentResolver();
             ParcelFileDescriptor fdDesc = resolver.openFileDescriptor(uri, openMode);
-            return fdDesc.detachFd();
+            m_parcelFileDescriptors.put(fdDesc.getFd(), fdDesc);
+            return fdDesc.getFd();
         } catch (FileNotFoundException e) {
             return error;
         } catch (IllegalArgumentException e) {
             Log.e(QtTAG, "openFdForContentUrl(): Invalid Uri");
             return error;
+        }
+    }
+
+    public static boolean closeFd(int fd)
+    {
+        ParcelFileDescriptor pfd = m_parcelFileDescriptors.get(fd);
+        if (pfd == null) {
+            Log.wtf(QtTAG, "File descriptor doesn't exist in cache");
+            return false;
+        }
+
+        try {
+            pfd.close();
+            return true;
+        } catch (IOException e) {
+            Log.e(QtTAG, "closeFd(): Failed to close the FD", e);
+            return false;
         }
     }
 
@@ -299,7 +322,7 @@ public class QtNative
     {
         Uri uri = getUriWithValidPermission(context, contentUrl, "r");
         if (uri == null) {
-            Log.e(QtTAG, "getFileNameFromUri(): No permissions to open Uri");
+            Log.e(QtTAG, "getFileNameFromUri(): No permissions to open Uri:" + contentUrl);
             return null;
         }
 
