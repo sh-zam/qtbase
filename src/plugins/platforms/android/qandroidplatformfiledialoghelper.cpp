@@ -107,10 +107,8 @@ void QAndroidPlatformFileDialogHelper::takePersistableUriPermission(const QJNIOb
     int modeFlags = QJNIObjectPrivate::getStaticField<jint>(
             JniIntentClass, "FLAG_GRANT_READ_URI_PERMISSION");
 
-    if (options()->acceptMode() == QFileDialogOptions::AcceptSave) {
-        modeFlags |= QJNIObjectPrivate::getStaticField<jint>(
-                JniIntentClass, "FLAG_GRANT_WRITE_URI_PERMISSION");
-    }
+    modeFlags |= QJNIObjectPrivate::getStaticField<jint>(
+            JniIntentClass, "FLAG_GRANT_WRITE_URI_PERMISSION");
 
     QJNIObjectPrivate contentResolver = m_activity.callObjectMethod(
             "getContentResolver", "()Landroid/content/ContentResolver;");

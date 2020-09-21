@@ -133,6 +133,16 @@ QString AndroidContentFileEngine::fileName(FileName f) const
     }
 }
 
+bool AndroidContentFileEngine::isRelativePath() const
+{
+    if (m_file.startsWith(QLatin1String("content://"))) {
+        return false;
+    } else {
+        // well then it's just a Unix path
+        return m_file.length() ? m_file.at(0) != QLatin1Char('/') : true;
+    }
+}
+
 void AndroidContentFileEngine::setResolvedFileName(const QString& uri)
 {
     QJNIObjectPrivate resolvedName = QJNIObjectPrivate::callStaticObjectMethod(
