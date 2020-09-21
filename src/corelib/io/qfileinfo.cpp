@@ -592,6 +592,11 @@ QString QFileInfo::absolutePath() const
     if (d->isDefaultConstructed) {
         return QLatin1String("");
     }
+#ifdef Q_OS_ANDROID
+    if (d->fileEntry.filePath().startsWith(QLatin1String("content://")) && d->fileEngine) {
+        return QLatin1String("");
+    }
+#endif
     return d->getFileName(QAbstractFileEngine::AbsolutePathName);
 }
 
@@ -758,7 +763,7 @@ QString QFileInfo::fileName() const
     if (d->isDefaultConstructed)
         return QLatin1String("");
 #ifdef Q_OS_ANDROID
-    if (d->fileEntry.filePath().startsWith("content:") && d->fileEngine) {
+    if (d->fileEntry.filePath().startsWith(QLatin1String("content://")) && d->fileEngine) {
         QString fname = d->fileEngine->fileName();
         return fname;
     }
@@ -807,6 +812,12 @@ QString QFileInfo::baseName() const
     Q_D(const QFileInfo);
     if (d->isDefaultConstructed)
         return QLatin1String("");
+#ifdef Q_OS_ANDROID
+    if (d->fileEntry.filePath().startsWith(QLatin1String("content://")) && d->fileEngine) {
+        QString fname = d->fileEngine->fileName();
+        return QFileInfo(fname).baseName();
+    }
+#endif
     return d->fileEntry.baseName();
 }
 
@@ -845,6 +856,12 @@ QString QFileInfo::completeSuffix() const
     Q_D(const QFileInfo);
     if (d->isDefaultConstructed)
         return QLatin1String("");
+#ifdef Q_OS_ANDROID
+    if (d->fileEntry.filePath().startsWith(QLatin1String("content://")) && d->fileEngine) {
+        QString fname = fileName();
+        return QFileInfo(fname).completeSuffix();
+    }
+#endif
     return d->fileEntry.completeSuffix();
 }
 
@@ -870,8 +887,10 @@ QString QFileInfo::suffix() const
         return QLatin1String("");
 
 #ifdef Q_OS_ANDROID
-    QString fname = fileName();
-    return fname.split(".").last();
+    if (d->fileEntry.filePath().startsWith(QLatin1String("content://")) && d->fileEngine) {
+        QString fname = fileName();
+        return QFileInfo(fname).suffix();
+    }
 #endif
     return d->fileEntry.suffix();
 }

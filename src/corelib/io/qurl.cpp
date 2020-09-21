@@ -2641,6 +2641,9 @@ QString QUrl::path(ComponentFormattingOptions options) const
 */
 QString QUrl::fileName(ComponentFormattingOptions options) const
 {
+#ifdef Q_OS_ANDROID
+    return QFileInfo(toString()).fileName();
+#endif
     const QString ourPath = path(options);
     const int slash = ourPath.lastIndexOf(QLatin1Char('/'));
     if (slash == -1)
@@ -3842,6 +3845,11 @@ bool QUrl::isDetached() const
 */
 QUrl QUrl::fromLocalFile(const QString &localFile)
 {
+#ifdef Q_OS_ANDROID
+    if (localFile.startsWith(QLatin1String("content://"))) {
+        return localFile;
+    }
+#endif
     QUrl url;
     if (localFile.isEmpty())
         return url;
@@ -3895,6 +3903,13 @@ QString QUrl::toLocalFile() const
     if (!isLocalFile())
         return QString();
 
+#ifdef Q_OS_ANDROID
+    if (d->isLocalFile()) {
+        return d->toLocalFile(QUrl::FullyDecoded);
+    } else {
+        return toString();
+    }
+#endif
     return d->toLocalFile(QUrl::FullyDecoded);
 }
 
@@ -3911,6 +3926,9 @@ QString QUrl::toLocalFile() const
 */
 bool QUrl::isLocalFile() const
 {
+#ifdef Q_OS_ANDROID
+    return d;
+#endif
     return d && d->isLocalFile();
 }
 
