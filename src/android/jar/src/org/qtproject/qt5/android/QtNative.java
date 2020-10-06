@@ -114,6 +114,8 @@ public class QtNative
     private static Method m_addItemMethod = null;
 
     private static HashMap<Integer, ParcelFileDescriptor> m_parcelFileDescriptors = new HashMap<Integer, ParcelFileDescriptor>();
+    private static HashMap<Uri, Integer> m_uriPermissions = new HashMap<Uri, Integer>(); // for URIs which were not accessed through SAF e.g through an Intent
+
 
     private static final Runnable runPendingCppRunnablesRunnable = new Runnable() {
         @Override
@@ -167,6 +169,24 @@ public class QtNative
         return joinedString.split(",");
     }
 
+    public static void addToKnownUri(Uri uri, int modeFlags) {
+        m_uriPermissions.put(uri, modeFlags);
+    }
+
+    public static boolean checkKnownUriPermission(Uri uri, String openMode) {
+        if (!m_uriPermissions.containsKey(uri)) {
+            return false;
+        }
+
+        int modeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+
+        if (!"r".equals(openMode)) {
+            modeFlags |= Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+        }
+
+        return (m_uriPermissions.get(uri) & modeFlags) != 0;
+    }
+
     private static Uri getUriWithValidPermission(Context context, String uri, String openMode)
     {
         try {
@@ -183,6 +203,13 @@ public class QtNative
                 if (iterUri.getPath().equals(uriStr) && isRightPermission) {
                     return iterUri;
                 }
+            }
+
+            Uri uriParsed = Uri.parse(uri);
+
+            // give known URIs a try, perhaps we got it in a way we couldn't persist the permissions (say Intent)
+            if (checkKnownUriPermission(uriParsed, openMode)) {
+                return uriParsed;
             }
 
             return null;
