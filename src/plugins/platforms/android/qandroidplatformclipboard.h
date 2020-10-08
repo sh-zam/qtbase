@@ -54,6 +54,9 @@ public:
     QMimeData *mimeData(QClipboard::Mode mode = QClipboard::Clipboard) override;
     void setMimeData(QMimeData *data, QClipboard::Mode mode = QClipboard::Clipboard) override;
     bool supportsMode(QClipboard::Mode mode) const override;
+
+private:
+    QScopedPointer<QMimeData> m_mimeData;
 };
 
 QT_END_NAMESPACE

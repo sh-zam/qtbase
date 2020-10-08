@@ -44,6 +44,7 @@
 QT_BEGIN_NAMESPACE
 
 QAndroidPlatformClipboard::QAndroidPlatformClipboard()
+    : m_mimeData(nullptr)
 {
     QtAndroidClipboard::setClipboardManager(this);
 }
@@ -54,15 +55,28 @@ QMimeData *QAndroidPlatformClipboard::mimeData(QClipboard::Mode mode)
     Q_ASSERT(supportsMode(mode));
     QMimeData *data = QtAndroidClipboard::getClipboardMimeData();
     data->setParent(this);
-    return data;
+
+    // this means clipboard is empty, so data could possibly be in m_mimeData
+    if (!QtAndroidClipboard::hasClipboardMimeData() && m_mimeData) {
+        return m_mimeData.data();
+    } else {
+        m_mimeData.reset();
+        return data;
+    }
 }
 
 void QAndroidPlatformClipboard::setMimeData(QMimeData *data, QClipboard::Mode mode)
 {
-    if (data && supportsMode(mode))
-        QtAndroidClipboard::setClipboardMimeData(data);
-    if (data != 0)
-        data->deleteLater();
+    if (data && supportsMode(mode) && m_mimeData.data() != data) {
+        if (data->hasHtml() || data->hasText() || data->hasUrls()) {
+            QtAndroidClipboard::setClipboardMimeData(data);
+            data->deleteLater();
+        } else {
+            m_mimeData.reset(data);
+            QtAndroidClipboard::clearClipboardMimeData();
+            emitChanged(mode);
+        }
+    }
 }
 
 bool QAndroidPlatformClipboard::supportsMode(QClipboard::Mode mode) const
