@@ -923,6 +923,9 @@ public class QtNative
     private static void clearClipData()
     {
         m_usePrimaryClip = false;
+        if (m_clipboardManager != null) {
+            m_clipboardManager.clearPrimaryClip();
+        }
     }
     private static void setClipboardText(String text)
     {
@@ -995,6 +998,14 @@ public class QtNative
         } catch (Exception e) {
             Log.e(QtTAG, "Failed to set clipboard data", e);
         }
+    }
+
+    private static boolean hasClipData()
+    {
+        if (m_clipboardManager != null) {
+            return m_clipboardManager.hasPrimaryClip();
+        }
+        return false;
     }
 
     private static void setClipboardHtml(String text, String html)

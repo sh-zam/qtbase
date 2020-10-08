@@ -123,6 +123,17 @@ namespace QtAndroidClipboard
     {
         m_manager->emitChanged(QClipboard::Clipboard);
     }
+
+    bool hasClipboardMimeData()
+    {
+        return QJNIObjectPrivate::callStaticMethod<jboolean>(applicationClass(), "hasClipData");
+    }
+
+    void clearClipboardMimeData()
+    {
+        QJNIObjectPrivate::callStaticMethod<void>(applicationClass(), "clearClipData");
+    }
+
 }
 
 QT_END_NAMESPACE
