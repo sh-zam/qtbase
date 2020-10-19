@@ -43,8 +43,6 @@ package org.qtproject.qt5.android;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.PixelFormat;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -53,7 +51,6 @@ import java.lang.reflect.Method;
 
 public class QtSurface extends SurfaceView implements SurfaceHolder.Callback
 {
-    private GestureDetector m_gestureDetector;
     private Object m_accessibilityDelegate = null;
 
     public QtSurface(Context context, int id, boolean onTop, int imageDepth)
@@ -69,13 +66,6 @@ public class QtSurface extends SurfaceView implements SurfaceHolder.Callback
             getHolder().setFormat(PixelFormat.RGBA_8888);
 
         setId(id);
-        m_gestureDetector =
-            new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
-                public void onLongPress(MotionEvent event) {
-                    QtNative.longPress(getId(), (int) event.getX(), (int) event.getY());
-                }
-            });
-        m_gestureDetector.setIsLongpressEnabled(true);
     }
 
     @Override
@@ -96,26 +86,5 @@ public class QtSurface extends SurfaceView implements SurfaceHolder.Callback
     public void surfaceDestroyed(SurfaceHolder holder)
     {
         QtNative.setSurface(getId(), null, 0, 0);
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event)
-    {
-        QtNative.sendTouchEvent(event, getId());
-        m_gestureDetector.onTouchEvent(event);
-        return true;
-    }
-
-    @Override
-    public boolean onTrackballEvent(MotionEvent event)
-    {
-        QtNative.sendTrackballEvent(event, getId());
-        return true;
-    }
-
-    @Override
-    public boolean onGenericMotionEvent(MotionEvent event)
-    {
-        return QtNative.sendGenericMotionEvent(event, getId());
     }
 }

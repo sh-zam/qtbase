@@ -46,24 +46,42 @@ import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.MotionEvent;
+import android.view.GestureDetector;
 
 public class QtLayout extends ViewGroup
 {
+    private GestureDetector m_gestureDetector;
     private Runnable m_startApplicationRunnable;
+
     public QtLayout(Context context, Runnable startRunnable)
     {
         super(context);
         m_startApplicationRunnable = startRunnable;
+        initializeGestureDetector(context);
     }
 
     public QtLayout(Context context, AttributeSet attrs)
     {
         super(context, attrs);
+        initializeGestureDetector(context);
     }
 
     public QtLayout(Context context, AttributeSet attrs, int defStyle)
     {
         super(context, attrs, defStyle);
+        initializeGestureDetector(context);
+    }
+
+    private void initializeGestureDetector(Context context)
+    {
+        m_gestureDetector =
+            new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+                public void onLongPress(MotionEvent event) {
+                    QtNative.longPress(getId(), (int) event.getX(), (int) event.getY());
+                }
+            });
+        m_gestureDetector.setIsLongpressEnabled(true);
     }
 
     @Override
@@ -251,5 +269,30 @@ public class QtLayout extends ViewGroup
         } else {
             addView(childView, params);
         }
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        return true;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        QtNative.sendTouchEvent(event, getId());
+        m_gestureDetector.onTouchEvent(event);
+        return true;
+    }
+
+    @Override
+    public boolean onTrackballEvent(MotionEvent event)
+    {
+        QtNative.sendTrackballEvent(event, getId());
+        return true;
+    }
+
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent event)
+    {
+        return QtNative.sendGenericMotionEvent(event, getId());
     }
 }
