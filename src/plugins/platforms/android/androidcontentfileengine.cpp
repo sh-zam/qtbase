@@ -54,15 +54,21 @@ AndroidContentFileEngine::AndroidContentFileEngine(const QString &f)
 bool AndroidContentFileEngine::open(QIODevice::OpenMode openMode)
 {
     QString openModeStr;
-    if (openMode & QFileDevice::ReadOnly) {
+    ProcessOpenModeResult res = processOpenModeFlags(openMode);
+    if (!res.ok) {
+        setError(QFileDevice::OpenError, res.error);
+        return false;
+    }
+
+    if (res.openMode & QFileDevice::ReadOnly) {
         openModeStr += QLatin1Char('r');
     }
-    if (openMode & QFileDevice::WriteOnly) {
+    if (res.openMode & QFileDevice::WriteOnly) {
         openModeStr += QLatin1Char('w');
     }
-    if (openMode & QFileDevice::Truncate) {
+    if (res.openMode & QFileDevice::Truncate) {
         openModeStr += QLatin1Char('t');
-    } else if (openMode & QFileDevice::Append) {
+    } else if (res.openMode & QFileDevice::Append) {
         openModeStr += QLatin1Char('a');
     }
 
