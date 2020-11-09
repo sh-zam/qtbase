@@ -61,6 +61,11 @@ QAndroidPlatformFileDialogHelper::QAndroidPlatformFileDialogHelper()
 {
 }
 
+void QAndroidPlatformFileDialogHelper::setDirectory(const QUrl &directory)
+{
+    m_directory = directory;
+}
+
 bool QAndroidPlatformFileDialogHelper::handleActivityResult(jint requestCode, jint resultCode, jobject data)
 {
     if (requestCode != REQUEST_CODE)
@@ -123,6 +128,20 @@ void QAndroidPlatformFileDialogHelper::setIntentTitle(const QString &title)
     m_intent.callObjectMethod("putExtra",
                               "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;",
                               extraTitle.object(), QJNIObjectPrivate::fromString(title).object());
+}
+
+void QAndroidPlatformFileDialogHelper::setInitialUri()
+{
+    if (QtAndroidPrivate::androidSdkVersion() >= 26) {
+        const QJNIObjectPrivate extraInitialUri = QJNIObjectPrivate::getStaticObjectField(
+            "android/provider/DocumentsContract",
+            "EXTRA_INITIAL_URI",
+            "Ljava/lang/String;");
+        m_intent.callObjectMethod("putExtra",
+                                "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;",
+                                extraInitialUri.object(),
+                                QJNIObjectPrivate::fromString(m_directory.toString()).object());
+    }
 }
 
 void QAndroidPlatformFileDialogHelper::setOpenableCategory()
@@ -229,6 +248,7 @@ bool QAndroidPlatformFileDialogHelper::show(Qt::WindowFlags windowFlags, Qt::Win
     }
 
     setIntentTitle(options()->windowTitle());
+    setInitialUri();
 
     QtAndroidPrivate::registerActivityResultListener(this);
     m_activity.callMethod<void>("startActivityForResult", "(Landroid/content/Intent;I)V",
