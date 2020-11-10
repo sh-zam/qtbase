@@ -38,6 +38,8 @@
 **
 ****************************************************************************/
 
+#include <android/input.h>
+
 #include <QtGui/qtguiglobal.h>
 
 #include "androidjniinput.h"
@@ -301,7 +303,7 @@ namespace QtAndroidInput
         }
     }
 
-    static void touchEnd(JNIEnv */*env*/, jobject /*thiz*/, jint /*winId*/, jint /*action*/)
+    static void touchEnd(JNIEnv */*env*/, jobject /*thiz*/, jint /*winId*/, jint action)
     {
         if (m_touchPoints.isEmpty())
             return;
@@ -324,7 +326,15 @@ namespace QtAndroidInput
         }
 
         QWindow *window = QtAndroid::topLevelWindowAt(m_touchPoints.at(0).area.center().toPoint());
-        QWindowSystemInterface::handleTouchEvent(window, touchDevice, m_touchPoints);
+
+        switch (action) {
+        case AMOTION_EVENT_ACTION_CANCEL:
+            QWindowSystemInterface::handleTouchCancelEvent(window, touchDevice);
+            break;
+        default:
+            QWindowSystemInterface::handleTouchEvent(window, touchDevice, m_touchPoints);
+            break;
+        }
     }
 
     static bool isTabletEventSupported(JNIEnv */*env*/, jobject /*thiz*/)

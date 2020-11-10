@@ -684,19 +684,7 @@ public class QtNative
                              event.getOrientation(i),
                              event.getPressure(i));
             }
-
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    touchEnd(id, 0);
-                    break;
-
-                case MotionEvent.ACTION_UP:
-                    touchEnd(id, 2);
-                    break;
-
-                default:
-                    touchEnd(id, 1);
-            }
+            touchEnd(id, event.getAction());
         }
     }
 
