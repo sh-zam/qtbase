@@ -723,7 +723,7 @@ public class QtNative
                 break;
 
             case MotionEvent.ACTION_DOWN:
-                mouseDown(id, (int) event.getX(), (int) event.getY(), event.getMetaState());
+                mouseDown(id, (int) event.getX(), (int) event.getY(), event.getMetaState(), event.getButtonState());
                 m_oldx = (int) event.getX();
                 m_oldy = (int) event.getY();
                 break;
@@ -1228,7 +1228,7 @@ public class QtNative
     // screen methods
 
     // pointer methods
-    public static native void mouseDown(int winId, int x, int y, int modifier);
+    public static native void mouseDown(int winId, int x, int y, int modifier, int actionButton);
     public static native void mouseUp(int winId, int x, int y, int modifiers);
     public static native void mouseMove(int winId, int x, int y, int modifier);
     public static native void mouseWheel(int winId, int x, int y, float hdelta, float vdelta);
