@@ -74,6 +74,8 @@ import android.view.View;
 import android.view.InputDevice;
 import android.database.Cursor;
 import android.provider.OpenableColumns;
+import android.provider.DocumentsContract;
+import android.provider.DocumentsContract.Document;
 
 import java.lang.reflect.Method;
 import java.security.KeyStore;
@@ -167,11 +169,48 @@ public class QtNative
         return joinedString.split(",");
     }
 
-    private static Uri getUriWithValidPermission(Context context, String uri, String openMode)
+    private static boolean checkUriPermission(Context context, Uri uri, String openMode)
     {
+        int modeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+        if (!"r".equals(openMode)) {
+            modeFlags |= Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+        }
+        return context.checkCallingOrSelfUriPermission(uri, modeFlags)
+            == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private static Long getColumnFlags(Context context, Uri uri)
+    {
+        ContentResolver resolver = context.getContentResolver();
+        Cursor cur = null;
+        try {
+            cur = resolver.query(uri,
+                    new String[]{DocumentsContract.Document.COLUMN_FLAGS}, null,
+                    null, null);
+
+            if (cur != null) {
+                if (cur.moveToFirst()) {
+                    return cur.getLong(0);
+                }
+            }
+            return 0L;
+        } catch (Exception e) {
+            Log.e(QtTAG, "getColumnFlags(): Failed query on Uri: " + uri.toString() + ", " + e);
+            return 0L;
+        } finally {
+            if (cur != null) {
+                cur.close();
+            }
+        }
+    }
+
+    private static Uri getUriWithValidPermission(Context context, String uriStr, String openMode)
+    {
+        Uri uri = Uri.parse(uriStr);
+
         try {
             List<UriPermission> permissions = context.getContentResolver().getPersistedUriPermissions();
-            String uriStr = Uri.parse(uri).getPath();
+            String uriPath = uri.getPath();
 
             for (int i = 0; i < permissions.size(); ++i) {
                 Uri iterUri = permissions.get(i).getUri();
@@ -180,12 +219,25 @@ public class QtNative
                 if (!openMode.equals("r"))
                    isRightPermission = permissions.get(i).isWritePermission();
 
-                if (iterUri.getPath().equals(uriStr) && isRightPermission) {
+                if (iterUri.getPath().equals(uriPath) && isRightPermission) {
                     return iterUri;
                 }
             }
 
-            return null;
+            // check if we have an explicit permission to the Uri
+            if (!checkUriPermission(context, uri, openMode)) {
+                return null;
+            }
+            if ("r".equals(openMode)) {
+                return uri;
+            } else {
+                Long flags = getColumnFlags(context, uri);
+                if ((flags & DocumentsContract.Document.FLAG_SUPPORTS_WRITE) != 0) {
+                    return uri;
+                } else {
+                    return null;
+                }
+            }
         } catch (SecurityException e) {
             e.printStackTrace();
             return null;
@@ -194,12 +246,7 @@ public class QtNative
 
     public static boolean openURL(Context context, String url, String mime)
     {
-        Uri uri = getUriWithValidPermission(context, url, "r");
-
-        if (uri == null) {
-            Log.e(QtTAG, "openURL(): No permissions to open Uri");
-            return false;
-        }
+        Uri uri = Uri.parse(url);
 
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW, uri);
